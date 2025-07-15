@@ -59,6 +59,7 @@ createApp({
                 backgroundColor: '#000000',
                 fontSize: 640,
                 videoDuration: 3,
+                format: 'mp4', // 'mp4' or 'gif'
             },
             
             // Internal state
@@ -94,7 +95,7 @@ createApp({
                 if (this.totalFrames > 0 && this.currentFrame < this.totalFrames) {
                     return `フレーム生成: ${Math.round((this.currentFrame / this.totalFrames) * 100)}%`;
                 } else if (this.ffmpegProgress > 0) {
-                    return `MP4変換: ${Math.round(this.ffmpegProgress)}%`;
+                    return `${this.options.format}変換: ${Math.round(this.ffmpegProgress)}%`;
                 }
             }
             return '';
@@ -265,9 +266,8 @@ createApp({
                 
                 this.addUserLog('フレーム生成完了', 'system');
                 
-                // Convert frames to MP4 using FFmpeg
-                this.statusText = 'MP4変換中...';
-                await this.convertFramesToMP4();
+                this.statusText = `${this.options.format}変換中...`;
+                await this.convertFramesToVideo();
                 
             } catch (error) {
                 console.error('動画生成エラー:', error);
@@ -306,8 +306,8 @@ createApp({
                 await new Promise(resolve => setTimeout(resolve, 1));
             }
         },
-        
-        async convertFramesToMP4() {
+
+        async convertFramesToVideo() {
             const ffmpeg = await loadFFmpeg();
             
             // Setup logger for FFmpeg progress
@@ -346,39 +346,62 @@ createApp({
                 const frameData = new Uint8Array(await this.frames[i].arrayBuffer());
                 await ffmpeg.writeFile(`frame${i.toString().padStart(6, '0')}.png`, frameData);
             }
-            
-            this.addUserLog('MP4エンコーディング開始', 'system');
-            
-            // Convert frames to MP4 (60 FPS)
-            await ffmpeg.exec([
-                '-framerate', '60',
-                '-i', 'frame%06d.png',
-                '-c:v', 'libx264',
-                '-tune', 'stillimage',
-                '-preset', 'ultrafast',
-                '-x264-params', 'keyint=150',
-                '-pix_fmt', 'yuv420p',
-                '-crf', '28',
-                '-y',
-                'output.mp4'
-            ]);
-            
-            // Read the output file
-            this.addUserLog('MP4ファイルを読み込み中...', 'system');
-            const data = await ffmpeg.readFile('output.mp4');
-            this.videoBlob = new Blob([data.buffer], { type: 'video/mp4' });
-            
-            // Clean up FFmpeg filesystem
-            this.addUserLog('一時ファイルをクリーンアップ中...', 'system');
-            for (let i = 0; i < this.frames.length; i++) {
-                await ffmpeg.deleteFile(`frame${i.toString().padStart(6, '0')}.png`);
+
+            this.addUserLog(`${this.options.format}エンコーディング開始`, 'system');
+            if (this.options.format === 'gif') {
+                await ffmpeg.exec([
+                    '-framerate', '60',
+                    '-i', 'frame%06d.png',
+                    '-vf', 'scale=320:-1:flags=lanczos',
+                    '-r', '15',
+                    '-y',
+                    'output.gif'
+                ]);
+                
+                // Read the output file
+                this.addUserLog('GIFファイルを読み込み中...', 'system');
+                const data = await ffmpeg.readFile('output.gif');
+                this.videoBlob = new Blob([data.buffer], { type: 'image/gif' });
+
+                // Clean up FFmpeg filesystem
+                this.addUserLog('一時ファイルをクリーンアップ中...', 'system');
+                for (let i = 0; i < this.frames.length; i++) {
+                    await ffmpeg.deleteFile(`frame${i.toString().padStart(6, '0')}.png`);
+                }
+                await ffmpeg.deleteFile('output.gif');
+
+            } else {
+                
+                // Convert frames to MP4 (60 FPS)
+                await ffmpeg.exec([
+                    '-framerate', '60',
+                    '-i', 'frame%06d.png',
+                    '-c:v', 'libx264',
+                    '-tune', 'stillimage',
+                    '-preset', 'ultrafast',
+                    '-x264-params', 'keyint=150',
+                    '-pix_fmt', 'yuv420p',
+                    '-crf', '28',
+                    '-y',
+                    'output.mp4'
+                ]);
+                
+                // Read the output file
+                this.addUserLog('MP4ファイルを読み込み中...', 'system');
+                const data = await ffmpeg.readFile('output.mp4');
+                this.videoBlob = new Blob([data.buffer], { type: 'video/mp4' });
+                
+                // Clean up FFmpeg filesystem
+                this.addUserLog('一時ファイルをクリーンアップ中...', 'system');
+                for (let i = 0; i < this.frames.length; i++) {
+                    await ffmpeg.deleteFile(`frame${i.toString().padStart(6, '0')}.png`);
+                }
+                await ffmpeg.deleteFile('output.mp4');
             }
-            await ffmpeg.deleteFile('output.mp4');
-            
+            this.addUserLog(`${this.options.format}変換完了！`, 'system');
+
             // Remove logger
             ffmpeg.off("log", logger);
-            
-            this.addUserLog('MP4変換完了！', 'system');
             
             // Auto download
             this.statusText = 'ダウンロード中...';
@@ -397,7 +420,7 @@ createApp({
                 const a = document.createElement('a');
                 a.style.display = 'none';
                 a.href = this.blobURL;
-                a.download = `scrolling-text-${new Date().getTime()}.mp4`;
+                a.download = `scrolling-text-${new Date().getTime()}.${this.options.format}`;
                 document.body.appendChild(a);
                 a.click();
                 
@@ -450,6 +473,7 @@ createApp({
                         this.options.videoDuration = videoDuration;
                     }
                 }
+                if (params.has('format')) this.options.format = params.get('format') === 'gif' ? 'gif' : 'mp4';
             } catch (error) {
                 console.error('Failed to parse hash parameters:', error);
             }
@@ -467,6 +491,7 @@ createApp({
             if (this.options.backgroundColor !== '#000000') params.set('backgroundColor', this.options.backgroundColor);
             if (this.options.fontSize !== 640) params.set('fontSize', this.options.fontSize.toString());
             if (this.options.videoDuration !== 3) params.set('videoDuration', this.options.videoDuration.toString());
+            if (this.options.format !== 'mp4') params.set('format', this.options.format);
             
             const hash = params.toString();
             if (hash) {
