@@ -1,0 +1,8 @@
+{
+  "type": "module",
+  "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
+    "string_random.js": "^1.0.0"
+  }
+}
