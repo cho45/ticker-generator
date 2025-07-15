@@ -387,19 +387,19 @@ createApp({
         
         async downloadVideo() {
             if (this.videoBlob) {
-                const url = URL.createObjectURL(this.videoBlob);
+                if (this.blobURL) {
+                    URL.revokeObjectURL(this.blobURL);
+                }
+                this.blobURL = URL.createObjectURL(this.videoBlob);
+
+                this.$refs.videoPlayer.src = this.blobURL;
+
                 const a = document.createElement('a');
                 a.style.display = 'none';
-                a.href = url;
+                a.href = this.blobURL;
                 a.download = `scrolling-text-${new Date().getTime()}.mp4`;
                 document.body.appendChild(a);
                 a.click();
-                
-                // Clean up
-                setTimeout(() => {
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                }, 100);
                 
                 this.addUserLog('動画ダウンロード完了！', 'system');
                 this.statusText = 'ダウンロード完了 - 準備完了';
