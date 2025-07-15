@@ -135,20 +135,8 @@ createApp({
         },
 
         async loadFont() {
-            if (this.options.selectedFont === 'Arial') {
-                this.updateCanvas();
-                return;
-            }
-            
             const fontName = this.options.selectedFont.replace(/\+/g, ' ');
             const fontSpec = `${this.options.fontStyle} ${this.options.fontWeight} ${this.options.fontSize}px "${fontName}"`;
-            
-            // フォントが既に読み込まれているかチェック
-            if (document.fonts.check(fontSpec)) {
-                console.log(`Font already loaded: ${fontSpec}`);
-                this.updateCanvas();
-                return;
-            }
             
             // 同じフォントの読み込みが既に進行中かチェック
             const fontKey = `${this.options.selectedFont}-${this.options.fontWeight}-${this.options.fontStyle}`;
@@ -162,13 +150,8 @@ createApp({
             const loadPromise = this.loadFontInternal(fontSpec);
             this.loadingFonts.set(fontKey, loadPromise);
             
-            try {
-                await loadPromise;
-                this.updateCanvas();
-            } finally {
-                // 読み込み完了後にフラグを削除
-                this.loadingFonts.delete(fontKey);
-            }
+            await loadPromise;
+            this.updateCanvas();
         },
         
         async loadFontInternal(fontSpec) {
