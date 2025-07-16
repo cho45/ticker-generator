@@ -184,23 +184,30 @@ createApp({
         },
         
         renderScrollingText() {
-            const centerY = this.canvas.height / 2;
-            const textWidth = this.ctx.measureText(this.options.text).width;
+            const text = this.options.text;
+            this.ctx.font = this.getFontString();
+            this.ctx.textBaseline = 'top';
+            const metrics = this.ctx.measureText(text);
+            const textWidth = metrics.width;
+            const ascent = metrics.actualBoundingBoxAscent || 0;
+            const descent = metrics.actualBoundingBoxDescent || 0;
+            const totalHeight = descent - ascent;
             const startX = this.canvas.width + this.scrollPosition;
-            
-            // Clear and redraw background
+
+            // 背景クリア
             this.ctx.fillStyle = this.options.backgroundColor;
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-            
-            // Draw text
+
+            // テキスト描画
             this.ctx.font = this.getFontString();
             this.ctx.fillStyle = this.options.textColor;
             this.ctx.textAlign = 'left';
-            this.ctx.textBaseline = 'middle';
-            
-            this.ctx.fillText(this.options.text, startX, centerY);
-            
-            // Reset scroll position when text completely exits
+
+            // ascent+descentの矩形が中央に来るようにY座標を調整
+            const y = (this.canvas.height - totalHeight) / 2;
+            this.ctx.fillText(text, startX, y);
+
+            // テキストが完全に消えたらリセット
             if (startX + textWidth < 0) {
                 this.scrollPosition = 0;
             }
