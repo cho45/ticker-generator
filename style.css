@@ -34,8 +34,42 @@ main {
     align-items: flex-start;
 }
 
-.canvas-container {
+.preview-section {
     flex-shrink: 0;
+}
+
+.canvas-container {
+    margin-bottom: 0;
+}
+
+.share-button-container {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.btn-share {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 32px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-share:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+}
+
+.btn-share:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
 }
 
 .video-player {
@@ -206,12 +240,12 @@ span {
     main {
         flex-direction: column;
     }
-    
-    .canvas-container {
+
+    .preview-section {
         text-align: center;
         margin-bottom: 20px;
     }
-    
+
     canvas {
         max-width: 400px;
     }

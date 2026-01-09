@@ -16,10 +16,21 @@
         </header>
         
         <main>
-            <div class="canvas-container">
-                <canvas ref="canvas" width="720" height="720"></canvas>
+            <div class="preview-section">
+                <div class="canvas-container">
+                    <canvas ref="canvas" width="720" height="720"></canvas>
+                </div>
+
+                <div v-if="canShare" class="share-button-container">
+                    <button
+                        @click="generateAndShare"
+                        :disabled="isGeneratingVideo"
+                        class="btn btn-share">
+                        {{ videoBlob ? '共有' : '動画を生成して共有' }}
+                    </button>
+                </div>
             </div>
-            
+
             <div class="controls">
                 <div class="control-group">
                     <label for="text-input">表示テキスト (初期値は<a href="https://cho45.stfuawsc.com/String_random.js/demo.html" target="_blank">String_random.js を使ったランダム</a>です):
@@ -104,11 +115,18 @@
                 </div>
                 
                 <div class="button-group">
-                    <button 
-                        @click="startRecording" 
-                        :disabled="isGeneratingVideo" 
+                    <button
+                        @click="startRecording"
+                        :disabled="isGeneratingVideo"
                         class="btn btn-primary">
                         動画を生成
+                    </button>
+                    <button
+                        v-if="canShare"
+                        @click="generateAndShare"
+                        :disabled="isGeneratingVideo"
+                        class="btn btn-share">
+                        共有
                     </button>
                     <video ref="videoPlayer" controls class="video-player"></video>
                 </div>

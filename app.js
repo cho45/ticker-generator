@@ -66,6 +66,8 @@ createApp({
             videoBlob: null,
             statusText: '準備完了',
             progress: 0,
+            canShare: false,
+            shouldAutoDownload: true,
             
             // Canvas related
             canvas: null,
@@ -105,10 +107,13 @@ createApp({
     mounted() {
         this.canvas = this.$refs.canvas;
         this.ctx = this.canvas.getContext('2d');
-        
+
         // URLハッシュから設定を復元
         this.loadOptionsFromHash();
-        
+
+        // Web Share API対応確認
+        this.checkShareCapability();
+
         this.loadFont();
         this.startAnimation();
     },
@@ -129,9 +134,67 @@ createApp({
     },
     
     methods: {
+        async checkShareCapability() {
+            if (!navigator.canShare) {
+                this.canShare = false;
+                return;
+            }
+
+            // ファイル共有が可能かテスト
+            try {
+                const testFile = new File([''], 'test.mp4', { type: 'video/mp4' });
+                this.canShare = navigator.canShare({ files: [testFile] });
+            } catch (error) {
+                this.canShare = false;
+            }
+        },
+
         generateRandomText() {
             this.options.text = getRandomText();
             this.updateCanvas();
+        },
+
+        async generateAndShare() {
+            if (this.videoBlob) {
+                // 既に生成済みの場合は即座に共有
+                await this.shareVideo();
+            } else {
+                // 未生成の場合は生成のみ行う（ユーザージェスチャーコンテキストが失われるため）
+                this.shouldAutoDownload = false;
+                await this.startRecording();
+                this.shouldAutoDownload = true;
+
+                // 生成完了後、ユーザーに再度クリックを促すメッセージを表示
+                if (this.videoBlob) {
+                    this.addUserLog('動画生成完了！もう一度「共有」ボタンをクリックして共有してください', 'system');
+                }
+            }
+        },
+
+        async shareVideo() {
+            if (!this.videoBlob) return;
+
+            const fileName = `scrolling-text-${new Date().getTime()}.${this.options.format}`;
+            const mimeType = this.options.format === 'gif' ? 'image/gif' : 'video/mp4';
+
+            const file = new File([this.videoBlob], fileName, { type: mimeType });
+
+            try {
+                await navigator.share({
+                    title: this.options.text,
+                    text: '文字スクロール動画ジェネレーター',
+                    url: 'https://cho45.stfuawsc.com/ticker-generator/',
+                    files: [file]
+                });
+                this.addUserLog('動画を共有しました', 'system');
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    this.addUserLog('共有がキャンセルされました', 'system');
+                } else {
+                    console.error('共有エラー:', error);
+                    this.addUserLog(`共有エラー: ${error.message}`, 'system');
+                }
+            }
         },
 
         async loadFont() {
@@ -400,15 +463,21 @@ createApp({
 
                 this.$refs.videoPlayer.src = this.blobURL;
 
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = this.blobURL;
-                a.download = `scrolling-text-${new Date().getTime()}.${this.options.format}`;
-                document.body.appendChild(a);
-                a.click();
-                
-                this.addUserLog('動画ダウンロード完了！', 'system');
-                this.statusText = 'ダウンロード完了 - 準備完了';
+                // shouldAutoDownloadフラグで制御
+                if (this.shouldAutoDownload) {
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = this.blobURL;
+                    a.download = `scrolling-text-${new Date().getTime()}.${this.options.format}`;
+                    document.body.appendChild(a);
+                    a.click();
+
+                    this.addUserLog('動画ダウンロード完了！', 'system');
+                    this.statusText = 'ダウンロード完了 - 準備完了';
+                } else {
+                    this.statusText = '生成完了 - 準備完了';
+                }
+
                 this.isGeneratingVideo = false;
                 this.frames = [];
                 this.currentFrame = 0;
