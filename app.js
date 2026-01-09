@@ -65,7 +65,6 @@ createApp({
             // Internal state
             videoBlob: null,
             statusText: '準備完了',
-            progress: 0,
             canShare: false,
             shouldAutoDownload: true,
             
@@ -92,12 +91,25 @@ createApp({
     },
     
     computed: {
+        progress() {
+            if (!this.isGeneratingVideo) return 0;
+
+            if (this.totalFrames > 0 && this.currentFrame < this.totalFrames) {
+                // フレーム生成フェーズ: 0-50%
+                return (this.currentFrame / this.totalFrames) * 50;
+            } else if (this.ffmpegProgress > 0) {
+                // FFmpeg変換フェーズ: 50-100%
+                return 50 + (this.ffmpegProgress / 100) * 50;
+            }
+            return 0;
+        },
+
         progressText() {
             if (this.isGeneratingVideo) {
                 if (this.totalFrames > 0 && this.currentFrame < this.totalFrames) {
-                    return `フレーム生成: ${Math.round((this.currentFrame / this.totalFrames) * 100)}%`;
+                    return `フレーム生成中: ${this.currentFrame} / ${this.totalFrames} (${Math.round((this.currentFrame / this.totalFrames) * 100)}%)`;
                 } else if (this.ffmpegProgress > 0) {
-                    return `${this.options.format}変換: ${Math.round(this.ffmpegProgress)}%`;
+                    return `${this.options.format}変換中: ${Math.round(this.ffmpegProgress)}%`;
                 }
             }
             return '';
@@ -181,8 +193,7 @@ createApp({
 
             try {
                 await navigator.share({
-                    title: this.options.text,
-                    text: '文字スクロール動画ジェネレーター',
+                    text: this.options.text,
                     url: 'https://cho45.stfuawsc.com/ticker-generator/',
                     files: [file]
                 });
@@ -293,7 +304,14 @@ createApp({
                 this.currentFrame = 0;
                 this.ffmpegProgress = 0;
                 this.logs = [];
-                
+
+                // プログレスセクションまでスクロール
+                await this.$nextTick();
+                const progressSection = document.querySelector('.progress-section');
+                if (progressSection) {
+                    progressSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+
                 this.addUserLog('動画生成を開始します', 'system');
                 
                 // Calculate total frames needed (60 FPS)

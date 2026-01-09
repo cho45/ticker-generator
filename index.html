@@ -131,16 +131,16 @@
                     <video ref="videoPlayer" controls class="video-player"></video>
                 </div>
                 
-                <div class="status">
-                    <span>{{ statusText }}</span>
-                    <span>{{ progressText }}</span>
-                </div>
-                
                 <div v-if="isGeneratingVideo" class="progress-section">
+                    <div class="progress-status">{{ statusText }}</div>
                     <div class="progress-bar">
-                        <div class="progress-fill" :style="{ width: ffmpegProgress + '%' }"></div>
+                        <div class="progress-fill" :style="{ width: progress + '%' }"></div>
                     </div>
-                    <div class="progress-text">FFmpeg進行状況: {{ Math.round(ffmpegProgress) }}%</div>
+                    <div class="progress-text">{{ progressText }}</div>
+                </div>
+
+                <div v-else class="status">
+                    <span>{{ statusText }}</span>
                 </div>
                 
                 <div v-if="logs.length > 0" class="log-section">

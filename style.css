@@ -331,30 +331,40 @@ span {
 /* Progress Bar Styles */
 .progress-section {
     margin-top: 20px;
-    padding: 15px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    border: 1px solid #e9ecef;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+    border-radius: 12px;
+    border: 2px solid #667eea;
+}
+
+.progress-status {
+    font-size: 1rem;
+    color: #2c3e50;
+    font-weight: 700;
+    margin-bottom: 12px;
+    text-align: center;
 }
 
 .progress-bar {
     width: 100%;
-    height: 8px;
+    height: 24px;
     background-color: #e9ecef;
-    border-radius: 4px;
+    border-radius: 12px;
     overflow: hidden;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .progress-fill {
     height: 100%;
-    background-color: #28a745;
-    border-radius: 4px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
     transition: width 0.3s ease;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
 }
 
 .progress-text {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     color: #495057;
     text-align: center;
     font-weight: 600;
