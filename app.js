@@ -45,22 +45,72 @@ function getRandomText() {
         /(Linux|Ruby|Perl|JavaScript|Java|Rust|golang|PHP|Haskell|Lisp)完全に理解した/,
         /([0-9]|1[0-2])月から本気出す/,
     ];
-    
+
     const selectedPattern = patterns[Math.floor(Math.random() * patterns.length)];
-    
+
     return String_random(selectedPattern.source);
+}
+
+function oklchToHex(l, c, h) {
+    // OKLCH → OKLAB
+    const hRad = h * Math.PI / 180;
+    const a = c * Math.cos(hRad);
+    const b = c * Math.sin(hRad);
+
+    // OKLAB → Linear sRGB (through LMS)
+    const l_ = l + 0.3963377774 * a + 0.2158037573 * b;
+    const m_ = l - 0.1055613458 * a - 0.0638541728 * b;
+    const s_ = l - 0.0894841775 * a - 1.2914855480 * b;
+
+    const l3 = l_ * l_ * l_;
+    const m3 = m_ * m_ * m_;
+    const s3 = s_ * s_ * s_;
+
+    let r = +4.0767416621 * l3 - 3.3077115913 * m3 + 0.2309699292 * s3;
+    let g = -1.2684380046 * l3 + 2.6097574011 * m3 - 0.3413193965 * s3;
+    let b_rgb = -0.0041960863 * l3 - 0.7034186147 * m3 + 1.7076147010 * s3;
+
+    // Linear sRGB → sRGB (gamma correction) → 0-255
+    const toSrgb = (x) => {
+        const clamped = Math.max(0, Math.min(1, x));
+        const gamma = clamped <= 0.0031308 ? 12.92 * clamped : 1.055 * Math.pow(clamped, 1/2.4) - 0.055;
+        return Math.round(gamma * 255);
+    };
+
+    const toHex = (n) => n.toString(16).padStart(2, '0');
+    return '#' + toHex(toSrgb(r)) + toHex(toSrgb(g)) + toHex(toSrgb(b_rgb));
+}
+
+function getRandomColors() {
+    // 文字色：白か黒
+    const isWhiteText = Math.random() < 0.5;
+    const textColor = isWhiteText ? '#ffffff' : '#000000';
+
+    // 背景色：OKLCHで生成
+    // 白文字 → 暗い背景 (L: 0.3-0.5)
+    // 黒文字 → 明るい背景 (L: 0.7-0.9)
+    const lightness = isWhiteText
+        ? 0.3 + Math.random() * 0.2
+        : 0.7 + Math.random() * 0.2;
+    const chroma = 0.1 + Math.random() * 0.1;
+    const hue = Math.random() * 360;
+
+    const backgroundColor = oklchToHex(lightness, chroma, hue);
+
+    return { textColor, backgroundColor };
 }
 
 createApp({
     data() {
+        const { textColor, backgroundColor } = getRandomColors();
         return {
             options: {
                 text: getRandomText(),
                 selectedFont: 'Noto+Sans+JP',
                 fontWeight: '900',
                 fontStyle: 'normal',
-                textColor: '#ffffff',
-                backgroundColor: '#000000',
+                textColor,
+                backgroundColor,
                 backgroundType: 'solid', // 'solid' or 'rainbow'
                 fontSize: 640,
                 videoDuration: 3,
