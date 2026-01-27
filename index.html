@@ -16,7 +16,7 @@
         </header>
         
         <main>
-            <div class="preview-section">
+            <div class="preview-section" :class="{ 'is-sticky': isSticky }">
                 <div class="canvas-container">
                     <canvas ref="canvas" width="720" height="720"></canvas>
                 </div>

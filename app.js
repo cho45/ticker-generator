@@ -142,6 +142,9 @@ createApp({
             
             // Font loading cache
             loadingFonts: new Map(),
+
+            // Sticky state for mobile
+            isSticky: false,
         }
     },
     
@@ -183,6 +186,9 @@ createApp({
 
         this.loadFont();
         this.startAnimation();
+
+        // Setup sticky observer for mobile
+        this.setupStickyObserver();
     },
     
     watch: {
@@ -634,7 +640,7 @@ createApp({
         
         updateHashFromOptions() {
             const params = new URLSearchParams();
-            
+
             // デフォルト値と異なる場合のみパラメータに含める
             // textは除外する
             if (this.options.selectedFont !== 'Noto+Sans+JP') params.set('selectedFont', this.options.selectedFont);
@@ -646,13 +652,31 @@ createApp({
             if (this.options.fontSize !== 640) params.set('fontSize', this.options.fontSize.toString());
             if (this.options.videoDuration !== 3) params.set('videoDuration', this.options.videoDuration.toString());
             if (this.options.format !== 'mp4') params.set('format', this.options.format);
-            
+
             const hash = params.toString();
             if (hash) {
                 location.hash = hash;
             } else {
                 location.hash = '';
             }
+        },
+
+        setupStickyObserver() {
+            // モバイル判定のメディアクエリ
+            const mediaQuery = window.matchMedia('(max-width: 768px)');
+
+            const updateSticky = () => {
+                if (!mediaQuery.matches) {
+                    this.isSticky = false;
+                    return;
+                }
+                // スクロール位置が100pxを超えたらsticky
+                this.isSticky = window.scrollY > 100;
+            };
+
+            window.addEventListener('scroll', updateSticky, { passive: true });
+            mediaQuery.addEventListener('change', updateSticky);
+            updateSticky();
         }
     }
 }).mount('#app');
