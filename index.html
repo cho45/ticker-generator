@@ -21,13 +21,29 @@
                     <canvas ref="canvas" width="720" height="720"></canvas>
                 </div>
 
-                <div v-if="canShare" class="share-button-container">
+                <div v-if="canShare && !isSticky" class="share-button-container">
                     <button
                         @click="generateAndShare"
                         :disabled="isGeneratingVideo"
                         class="btn btn-share">
                         {{ videoBlob ? '共有' : '動画を生成して共有' }}
                     </button>
+                </div>
+
+                <div v-if="isSticky" class="sticky-controls">
+                    <button
+                        v-if="canShare"
+                        @click="generateAndShare"
+                        :disabled="isGeneratingVideo"
+                        class="btn btn-share btn-share-compact">
+                        {{ videoBlob ? '共有' : '生成して共有' }}
+                    </button>
+                    <div v-if="isGeneratingVideo" class="sticky-progress">
+                        <div class="sticky-progress-bar">
+                            <div class="sticky-progress-fill" :style="{ width: progress + '%' }"></div>
+                        </div>
+                        <div class="sticky-progress-text">{{ Math.round(progress) }}%</div>
+                    </div>
                 </div>
             </div>
 
