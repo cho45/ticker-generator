@@ -670,7 +670,6 @@ createApp({
                     this.isSticky = false;
                     return;
                 }
-                // スクロール位置が100pxを超えたらsticky
                 this.isSticky = window.scrollY > 100;
             };
 
