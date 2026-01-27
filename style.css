@@ -153,6 +153,54 @@ input[type="color"] {
     cursor: pointer;
 }
 
+input[type="color"].inactive {
+    opacity: 0.4;
+}
+
+.color-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.color-input-group input[type="color"] {
+    flex: 1;
+}
+
+.btn-rainbow {
+    width: 45px;
+    height: 45px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background: linear-gradient(90deg,
+        hsl(0, 100%, 50%),
+        hsl(60, 100%, 50%),
+        hsl(120, 100%, 50%),
+        hsl(180, 100%, 50%),
+        hsl(240, 100%, 50%),
+        hsl(300, 100%, 50%),
+        hsl(360, 100%, 50%)
+    );
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.btn-rainbow:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-rainbow.active {
+    border-color: #3498db;
+    border-width: 3px;
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+}
+
 input[type="range"] {
     margin-right: 10px;
 }

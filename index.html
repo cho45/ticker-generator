@@ -86,7 +86,21 @@
                     
                     <div class="control-group">
                         <label for="bg-color">背景色:</label>
-                        <input type="color" v-model="options.backgroundColor" @input="updateCanvas">
+                        <div class="color-input-group">
+                            <input
+                                type="color"
+                                v-model="options.backgroundColor"
+                                @input="setBackgroundType('solid')"
+                                :class="{ inactive: options.backgroundType === 'rainbow' }">
+                            <button
+                                type="button"
+                                class="btn-rainbow"
+                                :class="{ active: options.backgroundType === 'rainbow' }"
+                                @click="setBackgroundType('rainbow')"
+                                title="レインボー">
+                                🌈
+                            </button>
+                        </div>
                     </div>
                 </div>
                 

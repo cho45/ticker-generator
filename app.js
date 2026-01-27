@@ -5,6 +5,10 @@ import { String_random } from './node_modules/string_random.js/lib/String_random
 
 const timeout = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+// レインボー背景の色相変化速度（度/フレーム @ 60fps）
+// 30 = 5周/秒
+const RAINBOW_DEGREES_PER_FRAME = 8;
+
 async function loadFFmpeg() {
 	if (loadFFmpeg.ffmpeg) {
 		return loadFFmpeg.ffmpeg;
@@ -57,6 +61,7 @@ createApp({
                 fontStyle: 'normal',
                 textColor: '#ffffff',
                 backgroundColor: '#000000',
+                backgroundType: 'solid', // 'solid' or 'rainbow'
                 fontSize: 640,
                 videoDuration: 3,
                 format: 'mp4', // 'mp4' or 'gif'
@@ -261,10 +266,16 @@ createApp({
             const centerY = this.canvas.height / 2;
             const textWidth = this.ctx.measureText(this.options.text).width;
             const startX = this.canvas.width + this.scrollPosition;
-            
+
             // Clear and redraw background
-            this.ctx.fillStyle = this.options.backgroundColor;
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            if (this.options.backgroundType === 'rainbow') {
+                // 動画と同じ速度: RAINBOW_DEGREES_PER_FRAME * 60fps = 度/秒、msに変換
+                const hueOffset = (Date.now() * RAINBOW_DEGREES_PER_FRAME * 60 / 1000) % 360;
+                this.drawRainbowBackground(hueOffset);
+            } else {
+                this.ctx.fillStyle = this.options.backgroundColor;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            }
             
             // Draw text
             this.ctx.font = this.getFontString();
@@ -342,14 +353,19 @@ createApp({
         
         async generateAllFrames() {
             const centerY = this.canvas.height / 2;
-            
+
             for (let frame = 0; frame < this.totalFrames; frame++) {
                 const scrollPos = frame * this.scrollSpeed;
                 const startX = this.canvas.width - scrollPos;
-                
+
                 // Clear and redraw background
-                this.ctx.fillStyle = this.options.backgroundColor;
-                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                if (this.options.backgroundType === 'rainbow') {
+                    const hueOffset = (frame * RAINBOW_DEGREES_PER_FRAME) % 360;
+                    this.drawRainbowBackground(hueOffset);
+                } else {
+                    this.ctx.fillStyle = this.options.backgroundColor;
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                }
                 
                 // Draw text
                 this.ctx.font = this.getFontString();
@@ -517,6 +533,17 @@ createApp({
             const fontName = this.options.selectedFont === 'Arial' ? 'Arial' : this.options.selectedFont.replace(/\+/g, ' ');
             return `${this.options.fontStyle} ${this.options.fontWeight} ${this.options.fontSize}px "${fontName}", Arial, sans-serif`;
         },
+
+        drawRainbowBackground(hue) {
+            // OKLCH色空間で単色塗りつぶし (L=70%, C=0.15 で鮮やかな色)
+            this.ctx.fillStyle = `oklch(80% 0.17 ${hue % 360})`;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        },
+
+        setBackgroundType(type) {
+            this.options.backgroundType = type;
+            this.updateCanvas();
+        },
         
         loadOptionsFromHash() {
             const hash = location.hash.slice(1);
@@ -531,6 +558,12 @@ createApp({
                 if (params.has('fontStyle')) this.options.fontStyle = params.get('fontStyle');
                 if (params.has('textColor')) this.options.textColor = params.get('textColor');
                 if (params.has('backgroundColor')) this.options.backgroundColor = params.get('backgroundColor');
+                if (params.has('backgroundType')) {
+                    const bgType = params.get('backgroundType');
+                    if (bgType === 'rainbow' || bgType === 'solid') {
+                        this.options.backgroundType = bgType;
+                    }
+                }
                 if (params.has('fontSize')) {
                     const fontSize = parseInt(params.get('fontSize'));
                     if (!isNaN(fontSize) && fontSize >= 160 && fontSize <= 960) {
@@ -559,6 +592,7 @@ createApp({
             if (this.options.fontStyle !== 'normal') params.set('fontStyle', this.options.fontStyle);
             if (this.options.textColor !== '#ffffff') params.set('textColor', this.options.textColor);
             if (this.options.backgroundColor !== '#000000') params.set('backgroundColor', this.options.backgroundColor);
+            if (this.options.backgroundType !== 'solid') params.set('backgroundType', this.options.backgroundType);
             if (this.options.fontSize !== 640) params.set('fontSize', this.options.fontSize.toString());
             if (this.options.videoDuration !== 3) params.set('videoDuration', this.options.videoDuration.toString());
             if (this.options.format !== 'mp4') params.set('format', this.options.format);
