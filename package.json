@@ -1,8 +1,22 @@
 {
+  "name": "ticker-generator",
+  "version": "1.0.0",
   "type": "module",
+  "scripts": {
+    "start": "npx serve .",
+    "test": "playwright test"
+  },
   "dependencies": {
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
     "string_random.js": "^1.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "serve": "^14.2.5"
+  },
+  "overrides": {
+    "ajv": "^8.17.1",
+    "minimatch": "^9.0.0"
   }
 }
